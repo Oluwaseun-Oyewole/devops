@@ -1,2 +1,1 @@
-aws/stop_instance.log
-aws/run_instance.log
+*.log
