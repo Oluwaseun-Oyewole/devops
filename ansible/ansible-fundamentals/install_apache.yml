@@ -1,0 +1,17 @@
+---
+
+  - hosts: all
+    become: true
+   
+    tasks:
+
+      - name: update apt package cache
+        apt:
+          update_cache: yes
+      
+
+      - name: install apache package
+        apt:
+          name: "{{ apache_package}}"
+          state: latest
+       
