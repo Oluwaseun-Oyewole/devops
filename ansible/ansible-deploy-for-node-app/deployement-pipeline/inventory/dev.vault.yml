@@ -1,3 +1,0 @@
-vault_db_password: '****'
-vault_redis_password: '***'
-vault_jwt_secret: '***'

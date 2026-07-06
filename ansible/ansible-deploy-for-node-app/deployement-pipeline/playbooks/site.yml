@@ -1,0 +1,11 @@
+---
+- name: Provision and deploy NestJS application
+  hosts: dev
+  become: true
+
+  vars_files:
+    - ./inventory/group_vars/all.yml
+    - ./inventory/group_vars/vault.yml
+
+  roles:
+    - role: common
