@@ -17,11 +17,21 @@
       apt:
         update_cache: yes
 
-    - name: Copy nginx config file
-      copy:
-        src: files/nginx.conf
-        dest: "{{ nginx_config_path }}"
-      notify: Restart nginx
+    - name: Create ansible user
+      tags: setup
+      user:
+        name: ansible
+        state: present
+        shell: /bin/bash
+        groups: sudo
+        append: yes
+
+    - name: Set up SSH key for ansible user
+      tags: setup
+      authorized_key:
+        user: ansible
+        state: present
+        key: "{{ lookup('file', '/home/ubuntu/.ssh/id_ed25519.pub') }}"
 
     - name: Install nginx web server
       apt:

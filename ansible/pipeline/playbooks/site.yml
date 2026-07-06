@@ -1,0 +1,17 @@
+---
+- name: Provision and deploy NestJS application
+  hosts: staging
+  become: true
+
+  vars_files:
+    - ../inventory/group_vars/all.yml
+    - ../inventory/group_vars/vault.yml
+
+  roles:
+    - role: common # System hardening, firewall, base packages
+    - role: postgres # PostgreSQL install + DB + user
+    - role: redis # Redis install + config
+    - role: node # Node.js + PM2 global install
+    - role: app # Deploy app code, run migrations
+    - role: pm2 # PM2 startup + systemd integration
+    - role: nginx # Nginx reverse proxy + SSL
