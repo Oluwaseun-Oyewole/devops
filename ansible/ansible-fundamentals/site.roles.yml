@@ -1,0 +1,22 @@
+---
+
+
+  - hosts: all
+    become: true
+    tasks:
+      - name: install updates
+        apt:
+          update_cache: yes
+
+ 
+  - hosts: all
+    become: true
+    roles: 
+      - base
+       
+  - hosts: webservers
+    become: true
+    roles: 
+      - webservers
+ 
+
