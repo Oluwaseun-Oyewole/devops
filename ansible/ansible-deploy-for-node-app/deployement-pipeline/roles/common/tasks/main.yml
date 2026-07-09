@@ -13,6 +13,11 @@
       - htop           
     state: present
 
+- name: Create app group
+  ansible.builtin.group:
+    name: "{{ app_group }}"
+    system: true
+
 - name: Create app system user
   ansible.builtin.user:
     name: "{{ app_user }}"

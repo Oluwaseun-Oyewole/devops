@@ -7,7 +7,7 @@
 - name:  Write Nginx site config
   ansible.builtin.template:
     src: nginx_site.conf.j2
-    dest: "/etc/nginx/sites-available/{{ app_name }}"
+    dest: "/etc/nginx/sites-available/{{ vault_app_name }}"
     owner: root
     group: root
     mode: "0644"
@@ -15,8 +15,8 @@
 
 - name: Enable Nginx site
   ansible.builtin.file:
-    src: "/etc/nginx/sites-available/{{ app_name }}"
-    dest: "/etc/nginx/sites-enabled/{{ app_name }}"
+    src: "/etc/nginx/sites-available/{{ vault_app_name }}"
+    dest: "/etc/nginx/sites-enabled/{{ vault_app_name }}"
     state: link
   notify: reload nginx
 

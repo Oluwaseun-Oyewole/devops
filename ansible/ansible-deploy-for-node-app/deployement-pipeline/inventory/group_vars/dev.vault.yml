@@ -1,7 +1,0 @@
-db_name: myapp_prod
-db_user: myapp
-db_password: {{ vault_db_password }}
-redis_password: {{ vault_redis_password }}
-app_repo: git@github.com:yourorg/yourapp.git
-app_branch: main
-node_version: 20

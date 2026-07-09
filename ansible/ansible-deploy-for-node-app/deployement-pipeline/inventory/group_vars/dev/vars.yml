@@ -1,0 +1,11 @@
+db_name: "{{ vault_app_name}}"
+db_user: "{{ vault_app_name}}"
+db_password: "{{ vault_db_password }}"
+redis_password: "{{ vault_redis_password }}"
+app_repo: "{{ vault_github_link }}" 
+app_branch: main
+node_version: 20
+app_user: "{{ vault_app_name }}"
+app_root: "{{ vault_app_root }}"
+app_group: "{{ vault_app_name }}"
+app_domain: "_"

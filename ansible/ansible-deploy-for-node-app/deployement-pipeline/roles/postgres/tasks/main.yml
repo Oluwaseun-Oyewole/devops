@@ -17,15 +17,34 @@
 - name: Create app database
   community.postgresql.postgresql_db:
     name: "{{ db_name }}"
+  become: true
   become_user: postgres
 
 - name: Create app DB user
   community.postgresql.postgresql_user:
-    db: "{{ db_name }}"
-    name: "{{ db_user }}"
+    login_db: "{{ db_name }}"
+    user: "{{ db_user }}"
     password: "{{ db_password }}"
-    priv: "ALL"
+  become: true
   become_user: postgres
+
+- name: Grant privileges to app DB user
+  community.postgresql.postgresql_privs:
+    db: "{{ db_name }}"
+    role: "{{ db_user }}"
+    type: database
+    privs: ALL
+  become: true
+  become_user: postgres
+
+- name: Detect installed PostgreSQL version
+  ansible.builtin.command: psql --version
+  register: pg_version_output
+  changed_when: false
+
+- name: Set postgresql_version fact
+  ansible.builtin.set_fact:
+    postgresql_version: "{{ pg_version_output.stdout.split()[2].split('.')[0] }}"
 
 - name: Restrict listen_addresses (bind to localhost only if app is co-located)
   ansible.builtin.lineinfile:
