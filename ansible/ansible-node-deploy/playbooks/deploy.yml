@@ -1,5 +1,5 @@
 ---
-- name: Provision NestJS application
+- name: Deploy NestJS application
   hosts: dev
   become: true
 
@@ -8,8 +8,4 @@
     - ./inventory/group_vars/vault.yml
 
   roles:
-    - role: common
-    - role: nginx
-    - role: node
-    - role: postgres
-    - role: redis
+    - role: app_deploy

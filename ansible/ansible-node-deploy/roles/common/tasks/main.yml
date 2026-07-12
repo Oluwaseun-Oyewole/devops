@@ -10,7 +10,8 @@
       - curl
       - git
       - ufw
-      - htop           
+      - htop  
+      - npm      
     state: present
 
 - name: Create app group
@@ -27,3 +28,30 @@
     create_home: true
     home: "{{ app_root }}"
 
+- name: Create deploy group
+  ansible.builtin.group:
+    name: deploy
+    state: present
+
+- name: Create deploy user
+  ansible.builtin.user:
+    name: deploy
+    group: deploy
+    shell: /bin/bash
+    create_home: yes
+    system: no
+
+- name: Add deploy user's SSH key for future deploys
+  ansible.posix.authorized_key:
+    user: deploy
+    key: "{{ lookup('file', '../../../files/ansible.pub') }}"
+    state: present
+
+- name: Create app root directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ app_root }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
