@@ -1,0 +1,14 @@
+- name: install apache on web servers
+  apt:
+    name: "{{ apache_package_name }}"
+    state: latest
+
+- name: copy HTML file for site
+  tags: apache,apache2
+  copy:
+    src: index.html
+    dest: /var/www/html/index.html
+    owner: root
+    group: root
+    mode: 0644
+

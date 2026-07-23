@@ -1,0 +1,15 @@
+---
+- name: Provision NestJS application
+  hosts: dev
+  become: true
+
+  vars_files:
+    - ./inventory/group_vars/all.yml
+    - ./inventory/group_vars/vault.yml
+
+  roles:
+    - role: common
+    - role: nginx
+    - role: node
+    - role: postgres
+    - role: redis

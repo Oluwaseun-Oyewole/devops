@@ -1,0 +1,39 @@
+---
+  - hosts: all
+    become: true
+
+
+  - hosts: all
+    become: true
+
+    tasks:
+      - name: install updates
+        apt:
+          update_cache: yes
+
+  - hosts: webservers
+    become: true
+    tasks:
+      - name: install apache on web servers
+        apt:
+          name: apache2
+          state: latest
+
+      - name: copy HTML file for site
+        tags: apache,apache2
+        copy:
+          src: index.html
+          dest: /var/www/html/index.html
+          owner: root
+          group: root
+          mode: 0644
+
+  - hosts: all
+    become: true
+    tasks:
+      - name: Add ssh to key for seun user
+        tags: always
+        authorized_key:
+          user: seun
+          key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEvA2wKG9jC6IDxJzg1+Wc8w+yeCl01dlRvOmkh/lUOo ansible"
+       

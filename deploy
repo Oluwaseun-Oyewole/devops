@@ -1,0 +1,114 @@
+#!/bin/env bash
+
+set -euo pipefail
+
+GITHUB_USERNAME=""
+GITHUB_REPO=""
+GITHUB_TOKEN=""
+APP_DIR="/var/www/auth"
+NODE_VERSION="21.7.1"
+PORT=3000
+
+# ========================================================================================
+# 1️⃣ UPDATE SYSTEM & INSTALL REQUIRED DEPENDENCIES
+# ========================================================================================
+echo "Updating system packages..."
+sudo apt-get update -y
+sudo apt-get upgrade -y
+
+echo "Installing required dependencies..."
+sudo apt-get install -y git curl nginx
+
+# ========================================================================================
+# 2️⃣ INSTALL NODE.JS
+# ========================================================================================
+echo "Installing Node.js..."
+sudo apt-get remove -y nodejs || true
+
+# Add NodeSource repo for Node.js 18 (Ubuntu/Debian)
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo bash -
+
+sudo apt-get install -y nodejs
+
+# ========================================================================================
+# 3️⃣ CLONE OR UPDATE THE REPOSITORY
+# ========================================================================================
+if [ -d "$APP_DIR" ]; then
+    echo "Repository already exists. Pulling latest changes..."
+    cd "$APP_DIR"
+    git reset --hard HEAD
+    git pull origin main
+else
+    echo "Cloning repository..."
+    git clone https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/$GITHUB_REPO.git "$APP_DIR"
+    cd "$APP_DIR"
+fi
+
+# ========================================================================================
+# 4️⃣ INSTALL NODE.JS DEPENDENCIES
+# ========================================================================================
+echo "Installing Node.js dependencies..."
+npm ci
+
+# ========================================================================================
+# 5️⃣ SET UP ENVIRONMENT VARIABLES
+# ========================================================================================
+if [ ! -f "$APP_DIR/.env.prod" ]; then
+    echo "No .env file found. Creating a default .env file..."
+    cat <<EOT > "$APP_DIR/.env.prod"
+DB_USER=your_rds_username
+DB_PASSWORD=your_rds_password
+DB_HOST=your_rds_endpoint
+DB_NAME=your_rds_database
+DB_PORT=5432
+PORT=$PORT
+EOT
+fi
+
+# ========================================================================================
+# 6️⃣ CONFIGURE NGINX AS A REVERSE PROXY
+# ========================================================================================
+echo "Configuring Nginx as a reverse proxy..."
+
+sudo tee /etc/nginx/sites-available/auth > /dev/null <<EOT
+server {
+    listen 80;
+    server_name http://34.201.169.72;
+
+    location / {
+        proxy_pass http://localhost:$PORT;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+}
+EOT
+
+# Enable the site (Ubuntu-specific — uses sites-enabled, not conf.d)
+sudo ln -sf /etc/nginx/sites-available/auth /etc/nginx/sites-enabled/auth
+sudo rm -f /etc/nginx/sites-enabled/default  # Remove default Nginx page
+
+# ========================================================================================
+# 7️⃣ RESTART NGINX
+# ========================================================================================
+echo "Restarting Nginx..."
+sudo systemctl restart nginx
+sudo systemctl enable nginx
+
+# ========================================================================================
+# 6️⃣ BUILD & START THE APPLICATION USING PM2
+# ========================================================================================
+echo "Building NestJS app..."
+cd "$APP_DIR"
+npm run build  
+
+echo "Starting the application with PM2..."
+sudo npm install -g pm2
+pm2 stop all || true
+pm2 start "$APP_DIR/dist/main.js" --name nest-auth-service   # absolute path
+pm2 save
+pm2 startup systemd
+
+echo "Deployment completed successfully!"
+echo "Access it at: http://34.201.169.72"

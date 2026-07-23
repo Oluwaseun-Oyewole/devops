@@ -1,0 +1,44 @@
+---
+  - hosts: all
+    become: true
+   
+    tasks:
+
+      - name: install updates (ubuntu)
+        tags: always
+        apt:
+          upgrade: dist
+          update_cache: yes
+
+      - name: update apt package cache
+        tags: always
+        apt:
+          update_cache: yes
+      
+
+  - hosts: all
+    become: true
+
+    tasks:
+      - name: create seun user
+        tags: always
+        user:
+          name: seun
+          groups: root
+
+      - name: Add ssh key for seun user
+        tags: always
+        authorized_key:
+          user: seun
+          key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEvA2wKG9jC6IDxJzg1+Wc8w+yeCl01dlRvOmkh/lUOo ansible"
+
+      - name: Add sudoer file for seun
+        tags: always
+        copy:
+          src: sudoer_seun
+          dest: /etc/sudoers.d/seun
+          group: root
+          owner: root
+          mode: 0440
+
+       

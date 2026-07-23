@@ -1,0 +1,17 @@
+- name: Add ssh key for user seun
+  tags: always
+  authorized_key:
+    user: seun
+    key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEvA2wKG9jC6IDxJzg1+Wc8w+yeCl01dlRvOmkh/lUOo ansible"
+
+
+- name: generate ssh_config file from template
+  tags: ssh
+  template:
+    src: "{{ ssh_template_file }}"
+    dest: /etc/ssh/ssh_config
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart_sshd
+

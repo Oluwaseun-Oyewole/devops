@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -x ### execute in debug mode 
+set -e ### exit when error
+set -o pipefail ### error when pipe fail
+
+# Get the list of all AWS resources in the account
+
+########################################################
+# This script uses the AWS CLI to list all resources in the account
+# Author: Seun
+# Date: 2026-06-01
+########################################################
+
+# list all s3 buckets
+echo "Listing all S3 buckets..."
+aws s3 ls >> resourceTracker_output.txt
+
+# list all EC2 instances
+echo "Listing all EC2 instances..."
+aws ec2 describe-instances | jq -r '.Reservations[].Instances[] | {InstanceId, InstanceType, State: .State.Name, Tags}' >> resourceTracker_output.txt
+
+# list all RDS instances
+echo "Listing all RDS instances..."
+aws rds describe-db-instances | jq -r '.DBInstances[] | {DBInstanceIdentifier, DBInstanceClass, Engine, DBInstanceStatus, MasterUsername}' >> resourceTracker_output.txt
+
+# list all IAM users
+echo "Listing all IAM users..." 
+aws iam list-users | jq -r '.Users[] | {UserName, UserId, Arn, CreateDate}' >> resourceTracker_output.txt

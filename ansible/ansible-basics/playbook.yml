@@ -1,0 +1,45 @@
+---
+- name: Playbook
+  hosts: webservers
+  become: true
+
+  vars:
+    nginx_config_path: /etc/nginx/nginx.conf
+
+  handlers:
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
+
+  tasks:
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+
+    - name: Create ansible user
+      tags: setup
+      user:
+        name: ansible
+        state: present
+        shell: /bin/bash
+        groups: sudo
+        append: yes
+
+    - name: Set up SSH key for ansible user
+      tags: setup
+      authorized_key:
+        user: ansible
+        state: present
+        key: "{{ lookup('file', '/home/ubuntu/.ssh/id_ed25519.pub') }}"
+
+    - name: Install nginx web server
+      apt:
+        name: nginx
+        state: present
+
+    - name: Start and enable nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes

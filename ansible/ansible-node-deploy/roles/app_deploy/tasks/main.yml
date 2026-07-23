@@ -1,0 +1,48 @@
+# roles/app_deploy/tasks/main.yml
+- name: Set release timestamp
+  ansible.builtin.set_fact:
+    release_path: "{{ app_root }}/releases/{{ ansible_date_time.iso8601_basic_short }}"
+
+- name: Ensure releases directory exists
+  ansible.builtin.file:
+    path: "{{ app_root }}/releases"
+    state: directory
+    owner: deploy
+    group: deploy
+    mode: '0755'
+
+- name: Clone repo at specified branch/tag
+  ansible.builtin.git:
+    repo: "{{ app_repo }}"
+    dest: "{{ release_path }}"
+    version: "{{ app_branch }}"
+    accept_hostkey: yes
+
+- name: Install dependencies
+  ansible.builtin.command: npm ci --production=false
+  args:
+    chdir: "{{ release_path }}"
+
+- name: Build NestJS app
+  ansible.builtin.command: npm run build
+  args:
+    chdir: "{{ release_path }}"
+
+- name: Flip 'current' symlink
+  ansible.builtin.file:
+    src: "{{ release_path }}"
+    dest: "{{ app_root }}/current"
+    state: link
+    force: yes
+
+- name: Reload app with PM2 (zero downtime)
+  ansible.builtin.command: pm2 reload ecosystem.config.js --update-env
+  args:
+    chdir: "{{ app_base_dir }}/current"
+
+- name: Save PM2 process list
+  ansible.builtin.command: pm2 save
+
+- name: Prune old releases (keep last 5)
+  ansible.builtin.shell: |
+    cd "{{ app_base_dir }}/releases" && ls -1t | tail -n +6 | xargs -r rm -rf
