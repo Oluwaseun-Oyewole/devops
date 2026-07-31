@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Complete setup: VPC + Security Group + EC2 (Ubuntu)"
+
+Parameters:
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "Your EC2 key pair for SSH"
+  InstanceType:
+    Type: String
+    Default: t2.micro
+    AllowedValues: [t2.micro, t2.small, t3.micro]
+    Description: "EC2 instance size"
+
+Resources:
+  deploymentsVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags: [{ Key: Name, Value: deploymentsVPC }]
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref deploymentsVPC
+      CidrBlock: 10.0.1.0/24 # CIDR range for 256 IP addresses in the public subnet
+      AvailabilityZone: eu-north-1a
+      MapPublicIpOnLaunch: true
+      Tags: [{ Key: Name, Value: PublicSubnet }]
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref deploymentsVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref deploymentsVPC
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  # ─── Security Group ─────
+  DeploymentsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "SSH and HTTP access"
+      VpcId: !Ref deploymentsVPC
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 22, ToPort: 22, CidrIp: 0.0.0.0/0 }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0 }
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0 }
+      SecurityGroupEgress:
+        - { IpProtocol: -1, CidrIp: 0.0.0.0/0 }
+      Tags: [{ Key: Name, Value: DeploymentsSecurityGroup }]
+
+  # ─── EC2 Instance ─────
+  WebServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-00220636f06dd33b4
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyPairName
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds:
+        - !Ref DeploymentsSecurityGroup
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          apt-get update -y
+          apt-get install -y nginx
+          systemctl start nginx
+          systemctl enable nginx
+          echo "<h1>Deployed via CloudFormation!</h1>" > /usr/share/nginx/html/index.html
+      Tags:
+        - Key: Name
+          Value: MyWebServer
+
+# ─── Outputs ────
+Outputs:
+  WebServerPublicIP:
+    Value: !GetAtt WebServer.PublicIp
+    Description: "Visit this IP in your browser after deployment"
+  VPCId:
+    Value: !Ref deploymentsVPC
+  SecurityGroupId:
+    Value: !Ref DeploymentsSecurityGroup

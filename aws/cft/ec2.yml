@@ -1,0 +1,32 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Ubuntu EC2 Instance.
+
+Parameters:
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "Name of an existing EC2 Key Pair for SSH access."
+
+Mappings:
+  RegionAMI:
+    eu-north-1:
+      AMI: ami-00220636f06dd33b4
+
+Resources:
+  UbuntuInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.micro
+      KeyName: !Ref "KeyPairName"
+      ImageId: !FindInMap [RegionAMI, !Ref "AWS::Region", AMI]
+
+      Tags:
+        - Key: Name
+          Value: MyUbuntuServer
+        - Key: OS
+          Value: Ubuntu
+
+Outputs:
+  PublicIP:
+    Value: !GetAtt UbuntuInstance.PublicIp
+    Description: "Public IP of your Ubuntu instance"

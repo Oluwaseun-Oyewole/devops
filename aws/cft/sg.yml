@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Security group with SSH, HTTP, and HTTPS access"
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: "VPC where this security group will live"
+
+Resources:
+  WebServerSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: WebServerSG
+      GroupDescription: "Allow SSH, HTTP, HTTPS inbound"
+      VpcId: !Ref VpcId
+
+      # INBOUND rules — traffic coming IN to your server
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22 # SSH
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: SSH access
+
+        - IpProtocol: tcp
+          FromPort: 80 # HTTP
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP web traffic
+
+        - IpProtocol: tcp
+          FromPort: 443 # HTTPS
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS web traffic
+
+      # OUTBOUND rules — traffic going OUT from your server
+      SecurityGroupEgress:
+        - IpProtocol: -1 # -1 means ALL protocols
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic
+
+      Tags:
+        - Key: Name
+          Value: WebServerSG
+
+Outputs:
+  SecurityGroupId:
+    Value: !Ref WebServerSG
+    Description: "Security group ID — use this when launching EC2"

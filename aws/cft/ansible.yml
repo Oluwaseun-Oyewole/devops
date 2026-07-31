@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Complete setup: VPC + Security Group + EC2 (Ubuntu)"
+
+Parameters:
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "Your EC2 key pair for SSH"
+
+  InstanceType:
+    Type: String
+    Default: t2.micro
+    AllowedValues: [t2.micro, t2.small, t3.micro]
+    Description: "EC2 instance size"
+
+  ExistingSubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: "Subnet ID from manually created VPC"
+
+  ExistingSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: "Security Group ID you created manually"
+
+Resources:
+  # ─── EC2 Instance ─────────────────────────────────────
+  AnsibleServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-00220636f06dd33b4
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyPairName
+
+      # SubnetId: !Ref ExistingSubnetId
+      # SecurityGroupIds:
+      #   - !Ref ExistingSecurityGroupId
+
+      NetworkInterfaces:
+        - DeviceIndex: "0" # primary network interface (always "0")
+          SubnetId: !Ref ExistingSubnetId
+          GroupSet:
+            - !Ref ExistingSecurityGroupId
+          AssociatePublicIpAddress: true
+      Tags:
+        - Key: Name
+          Value: AnsibleWebServer
+
+  TargetServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-00220636f06dd33b4
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyPairName
+
+      # SubnetId: !Ref ExistingSubnetId
+      # SecurityGroupIds:
+      #   - !Ref ExistingSecurityGroupId
+
+      NetworkInterfaces:
+        - DeviceIndex: "0" # primary network interface (always "0")
+          SubnetId: !Ref ExistingSubnetId
+          GroupSet:
+            - !Ref ExistingSecurityGroupId
+          AssociatePublicIpAddress: true
+      Tags:
+        - Key: Name
+          Value: TargetServer
+
+Outputs:
+  AnsibleServerPublicIP:
+    Value: !GetAtt AnsibleServer.PublicIp
+    Description: "Public IP of your instance"
+  AnsibleServerPrivateIP:
+    Value: !GetAtt AnsibleServer.PrivateIp
+    Description: "Private IP of your instance"
+  TargetServerPublicIP:
+    Value: !GetAtt TargetServer.PublicIp
+    Description: "Public IP of your instance"
+  TargetServerPrivateIP:
+    Value: !GetAtt TargetServer.PrivateIp
+    Description: "Private IP of your instance"
