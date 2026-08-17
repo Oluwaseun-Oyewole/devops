@@ -56,6 +56,19 @@ resource "aws_instance" "control" {
     ]
   }
 
+  # verify ssh connectivity
+  
+  provisioner "remote-exec" {
+  inline = ["echo SSH connectivity verified!"]
+
+  connection {
+    type        = "ssh"
+    user        = "ubuntu"
+    private_key = file(var.private_key_path)
+    host        = self.public_ip
+  }
+}
+
   # Copy the private key so control node can SSH into the nodes
   provisioner "file" {
     source      = var.private_key_path
@@ -102,4 +115,3 @@ resource "null_resource" "copy_inventory" {
     destination = "/home/ubuntu/inventory.ini"
   }
 }
-

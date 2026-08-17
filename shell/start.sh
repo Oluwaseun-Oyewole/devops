@@ -8,7 +8,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirnam e "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/shell/helper"
 
 # ─── Configuration — edit these before running ───────────────────────────────
