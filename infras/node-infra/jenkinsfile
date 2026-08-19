@@ -1,0 +1,100 @@
+pipeline {
+    agent any
+
+    parameters {
+        booleanParam(name: 'TERRAFORM_FORMAT_CHECK', defaultValue: true, description: 'Check to format Terraform files')
+        booleanParam(name: 'TERRAFORM_INIT', defaultValue: true, description: 'Check to initialize Terraform')
+        booleanParam(name: 'TERRAFORM_VALIDATE', defaultValue: true, description: 'Check to validate Terraform configuration')
+        booleanParam(name: 'PLAN_TERRAFORM', defaultValue: false, description: 'Check to plan Terraform changes')
+        booleanParam(name: 'APPLY_TERRAFORM', defaultValue: false, description: 'Check to apply Terraform changes')
+        booleanParam(name: 'DESTROY_TERRAFORM', defaultValue: false, description: 'Check to destroy Terraform changes')
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                // Clean workspace before cloning (optional)
+                deleteDir()
+
+                // Clone the Git repository
+                git branch: 'main',
+                    url: 'https://github.com/Oluwaseun-Oyewole/devops'
+
+                sh "ls -lart"
+            }
+        }
+
+        stage('Terraform Format Check') {
+                    steps {
+                        dir("infras/node-infra/terraform") {
+                            sh 'terraform fmt -check -recursive'
+                        }
+                    }
+                }
+        
+        stage('Terraform Init') {
+                    steps {
+                       withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials-seun']]){
+                            dir('infras/node-infra/terraform') {
+                            sh 'echo "=================Terraform Init=================="'
+                            sh 'terraform init'
+                        }
+                    }
+                }
+        }
+
+        stage('Terraform Validate') {
+                    steps {
+                        dir('infras/node-infra/terraform') {
+                            sh 'terraform validate'
+                        }
+                    }
+                }
+        
+
+        stage('Terraform Plan') {
+            steps {
+                script {
+                    if (params.PLAN_TERRAFORM) {
+                       withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials-seun']]){
+                            dir('infras/node-infra/terraform') {
+                                sh 'echo "=================Terraform Plan=================="'
+                                sh 'terraform plan'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                script {
+                    if (params.APPLY_TERRAFORM) {
+                       withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials-seun']]){
+                            dir('infras/node-infra/terraform') {
+                                sh 'echo "=================Terraform Apply=================="'
+                                sh 'terraform apply -auto-approve'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Destroy') {
+            steps {
+                script {
+                    if (params.DESTROY_TERRAFORM) {
+                       withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials-seun']]){
+                            dir('infras/node-infra/terraform') {
+                                sh 'echo "=================Terraform Destroy=================="'
+                                sh 'terraform destroy -auto-approve'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

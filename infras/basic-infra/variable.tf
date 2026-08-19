@@ -1,9 +1,9 @@
 variable "key_name" {
-  default = "iam-user"
+  default = ""
 }
 
 variable "private_key_path" {
-  default = "~/.ssh/iam-user.pem"
+  default = ""
 }
 
 variable "ami_id" {
