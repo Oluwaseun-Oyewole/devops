@@ -1,0 +1,11 @@
+version: "3"
+
+tasks:
+  trigger_workflow:
+    desc: "Trigger workflow using at"
+    cmds:
+      - act workflow_dispatch \
+        --container-architecture linux/amd64 \
+        -P ubuntu-latest=ghcr.io/catthehacker/ubuntu:full-latest \
+        --directory .github/workflows/test \
+        -w '.github/workflows/test.yml'
