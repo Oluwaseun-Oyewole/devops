@@ -1,0 +1,48 @@
+services:
+  otel-collector:
+    container_name: otel-collector
+    image: otel/opentelemetry-collector-contrib
+    user: "0"
+    volumes:
+      - ./config.yaml:/etc/otelcol-contrib/config.yaml
+      - ./.data:/etc/otelcol-contrib/.data
+    networks:
+      - tracing
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./applications/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/tempo.yaml
+      - ./applications/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    networks:
+      - tracing
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./applications/tempo/tempo.yaml:/etc/tempo.yaml
+    networks:
+      - tracing
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yaml"
+      - "--web.enable-remote-write-receiver"
+    volumes:
+      - ./applications/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml
+    networks:
+      - tracing
+
+networks:
+  tracing:
+    name: tracing
+
+volumes:
+  playlist-api-volume:

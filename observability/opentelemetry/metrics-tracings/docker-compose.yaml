@@ -1,0 +1,38 @@
+services:
+  otel-collector:
+    container_name: otel-collector
+    image: otel/opentelemetry-collector-contrib:latest
+    user: "0"
+    volumes:
+      - ./config.yml:/etc/otelcol-contrib/config.yaml
+      - ./.data:/etc/otel-contrib/.data
+    networks:
+      - metrics-tracing
+
+  fastapi-app:
+    image: rslim087/fastapi-prometheus:latest
+    ports:
+      - "8000:8000"
+    networks:
+      - metrics-tracing
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_GO_AUTO_TARGET_EXE=/shared/app
+      - OTEL_SERVICE_NAME="fastapi-app"
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_PROPAGATORS=tracecontext,baggage
+
+  prometheus:
+    image: prom/prometheus:latest 
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yaml"
+      - "--web.enable-remote-write-receiver"
+    volumes:
+      - ./applications/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml
+    networks:
+      - metrics-tracing
+networks:
+  metrics-tracing:
