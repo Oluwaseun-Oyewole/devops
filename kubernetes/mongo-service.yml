@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service
+spec:
+  # ClusterIP (the default) = reachable only from INSIDE the cluster.
+  # Databases should not be exposed to the outside world.
+  type: ClusterIP
+  selector:
+    app: mongodb # must match the pod label above
+  ports:
+    - protocol: TCP
+      port: 27017 # port the Service listens on
+      targetPort: 27017 # port on the MongoDB container

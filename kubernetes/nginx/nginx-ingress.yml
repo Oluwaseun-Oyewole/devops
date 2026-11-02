@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress
+spec:
+  # Which Ingress Controller should handle this Ingress.
+  # Minikube's ingress addon uses the NGINX Ingress Controller.
+  ingressClassName: nginx
+
+  rules:
+    # Requests for this domain name...
+    - host: myapp.local
+      http:
+        paths:
+          # ...with any path starting with "/"...
+          - path: /
+            pathType: Prefix
+            # ...are sent to this Service and port.
+            backend:
+              service:
+                name: nginx-service
+                port:
+                  number: 8080

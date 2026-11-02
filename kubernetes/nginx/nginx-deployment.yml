@@ -1,0 +1,60 @@
+# 1. Which version of the Kubernetes API handles this object.
+#    Deployments live in the "apps/v1" API group.
+apiVersion: apps/v1
+
+# 2. What kind of object we are creating.
+kind: Deployment
+
+# 3. Metadata: information ABOUT the Deployment (its name and labels).
+metadata:
+  name: nginx-deployment
+  labels:
+ 
+
+# 4. Spec: the DESIRED STATE of the Deployment (what you want Kubernetes to do).
+spec:
+  # How many copies (pods) of nginx should always be running.
+  replicas: 2
+
+  # Tells the Deployment which pods it manages:
+  # "any pod with the label app: nginx belongs to me."
+  selector:
+    matchLabels:
+      app: nginx
+
+  # The TEMPLATE is the blueprint for each pod the Deployment creates.
+  template:
+    metadata:
+      # Every pod gets this label. It MUST match the selector above,
+      # otherwise the Deployment can't find its own pods.
+      labels:
+        app: nginx
+    spec:
+      # The containers that run inside each pod.
+      automountServiceAccountToken: false
+      containers:
+        - name: nginx
+          image: nginxinc/nginx-unprivileged:1.27 # container image pulled from Docker Hub
+          ports:
+            - containerPort: 8080
+              protocol: TCP 
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080 
+          resources:
+            limits:
+              memory: "128Mi"
+            requests:
+              memory: "25Mi"
+              cpu: "250m"
+              ephemeral-storage: "100Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+        runAsUser: 1001
+        runAsGroup: 1001
+        runAsNonRoot: true

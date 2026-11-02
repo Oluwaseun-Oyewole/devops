@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+  labels:
+    app: mongodb
+spec:
+  # Keep ONE replica. Multiple MongoDB pods from a Deployment would each
+  # have their own separate data and would not sync with each other.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:7.0
+          ports:
+            - containerPort: 27017 # MongoDB's default port
+
+          # Environment variables the mongo image reads on first start
+          # to create the roo t (admin) user.
+          # Values come from the Secret, not written here in plain text.
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret # name of the Secret
+                  key: mongo-root-username # key inside the Secret
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: mongo-root-password

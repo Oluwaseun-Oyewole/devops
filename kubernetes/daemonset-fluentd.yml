@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: log-agent
+spec:
+  selector:
+    matchLabels:
+      app: log-agent
+  template:
+    metadata:
+      labels:
+        app: log-agent
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: agent
+          image: fluent/fluentd:v1.16-1
+          resources:
+            limits:
+              memory: "200Mi"
+            requests:
+              memory: "100Mi"
+              cpu: "100m"
+              ephemeral-storage: "1Gi"

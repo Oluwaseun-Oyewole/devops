@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-express
+  labels:
+    app: mongo-express
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-express
+  template:
+    metadata:
+      labels:
+        app: mongo-express
+    spec:
+      containers:
+        - name: mongo-express
+          image: mongo-express:1.0.2
+          ports:
+            - containerPort: 8081 # mongo-express web UI port
+          env:
+            # Credentials, read from the Secret
+            - name: MONGO_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: mongo-root-username
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: mongo-root-password
+            # Database address, read from the ConfigMap
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: mongodb-configmap
+                  key: database_url
+            # Build the full connection string. $(VAR) inserts the
+            # values of the variables defined above.
+            - name: ME_CONFIG_MONGODB_URL
+              value: "mongodb://$(MONGO_USER):$(MONGO_PASSWORD)@$(DB_HOST):27017/"

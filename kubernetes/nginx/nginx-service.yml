@@ -1,0 +1,34 @@
+# ------------------------------------------------------------
+# A Service that exposes the nginx Deployment
+# ------------------------------------------------------------
+
+# Services live in the core API group, so the version is just "v1".
+apiVersion: v1
+
+# We are creating a Service.
+kind: Service
+
+metadata:
+  name:
+
+spec:
+  # NodePort opens a port on the node so you can reach the app
+  # from outside the cluster (perfect for Minikube).
+  # Other common types:
+  #   ClusterIP    - default, reachable only INSIDE the cluster
+  #   LoadBalancer - gets an external IP from a cloud provider
+  type: NodePort
+
+  # The selector is how the Service fin. ds its pods:
+  # "send traffic to any pod labeled app: nginx."
+  # This MUST match the pod labels in nginx-deployment.yml.
+  selector:
+    app: nginx
+
+  ports:
+    - protocol: TCP
+      port:
+        8080
+        # port the Service itself listens on
+      targetPort: 8080 # the port on the pod to forward traffic to (nginx's containerPort)
+      nodePort: 30080 # the port opened on the node for outside access (range 30000-32767)
